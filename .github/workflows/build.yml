@@ -10,7 +10,7 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
+    
 jobs:
   # for Pull Request (exclude merged)
   pullreq_build:
@@ -22,8 +22,8 @@ jobs:
         id: get_branch
         run: |
           PR=$(curl -H "X-Kuroco-Auth: token 106beec769b812a8f6b3e7437b2c8b9b" https://anyname.g.kuroco.app/direct/menu/github/?pr=${{ github.event.issue.pull_request.url }})
-          echo "branch=$(echo $PR | jq -r '.ref')" >> $GITHUB_OUTPUT
-          echo "sha=$(echo $PR | jq -r '.sha')" >> $GITHUB_OUTPUT
+          echo "::set-output name=branch::$(echo $PR | jq -r '.ref')"
+          echo "::set-output name=sha::$(echo $PR | jq -r '.sha')"
       - name: Checkout Repo
         uses: actions/checkout@v4
         with:
@@ -31,29 +31,20 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18.x'
-
-      - name: CI Cache
-        uses: actions/cache@v4
-        id: node_modules_cache_id
-        env:
-          cache-name: cache-node-modules
-        with:
-          path: "**/node_modules"
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ steps.get_branch.outputs.branch }}-${{ hashFiles('**/package-lock.json') }}
-                      
+          node-version: '16.x'
       - name: Install dependencies
-        if: ${{ steps.node_modules_cache_id.outputs.cache-hit != 'true' }}      
-        run: npm ci  
+        run: npm ci
       - name: Build
         run: npm run build
-      - name: Zip artifact for upload
-        run: cd out && zip ../out.zip . -r
+      - name: Generate
+        run: npm run generate
+        # - name: Zip artifact for upload
+        #  run: cd dist && zip ../dist.zip . -r
       - name: Archive Production Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.get_branch.outputs.sha }}-${{ github.run_id }}
-          path: out.zip
+          path: dist
           retention-days: 7
       - name: Wait for Artifact download
         run: sleep 15
@@ -62,7 +53,7 @@ jobs:
         env:
           webhook_url: "https://anyname.g.kuroco.app/direct/menu/github/"
           webhook_secret: "106beec769b812a8f6b3e7437b2c8b9b"
-          data: '{"single_zip":"1","domain":"anyname.g.kuroco-front.app","pr":"${{ github.event.issue.pull_request.url }}",  "repository":"${{ github.repository }}", "run_id":"${{ github.run_id }}", "hash":"${{ steps.get_branch.outputs.sha }}"}'
+          data: '{"single_zip":"0","domain":"anyname.g.kuroco-front.app","pr":"${{ github.event.issue.pull_request.url }}",  "repository":"${{ github.repository }}", "run_id":"${{ github.run_id }}", "hash":"${{ steps.get_branch.outputs.sha }}"}'
           
   #for Push
   pushed_build:
@@ -75,33 +66,24 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18.x'
-    
-      - name: CI Cache
-        uses: actions/cache@v4
-        id: node_modules_cache_id
-        env:
-          cache-name: cache-node-modules
-        with:
-          path: "**/node_modules"
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ env.BRANCH }}-${{ hashFiles('**/package-lock.json') }}
+          node-version: '16.x'
       - name: Install dependencies
-        if: ${{ steps.node_modules_cache_id.outputs.cache-hit != 'true' }}
         run: npm ci
       - name: Build
         run: npm run build
-      - name: Zip artifact for upload
-        run: cd out && zip ../out.zip . -r
+      - name: Generate
+        run: npm run generate
+        # - name: Zip artifact for upload
+        #  run: cd dist && zip ../dist.zip . -r
       - name: Archive Production Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ github.sha }}-${{ github.run_id }}
-          path: out.zip
+          path: dist
           retention-days: 7
       - name: Webhook
         uses: diverta/workflow-webhook@v3
         env:
           webhook_url: "https://anyname.g.kuroco.app/direct/menu/github/"
           webhook_secret: "106beec769b812a8f6b3e7437b2c8b9b"
-          data: '{"single_zip":"1","domain":"anyname.g.kuroco-front.app","pr":"${{ github.event.issue.pull_request.url }}",  "repository":"${{ github.repository }}", "run_id":"${{ github.run_id }}", "hash":"${{ github.sha }}"}'
-
+          data: '{"single_zip":"0","domain":"anyname.g.kuroco-front.app", "repository":"${{ github.repository }}", "run_id":"${{ github.run_id }}", "hash":"${{ github.sha }}"}'
