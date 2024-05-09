@@ -2,7 +2,7 @@
   <main>
     <header
       class="header"
-      :style="{ backgroundImage: `url(${response.details.ext_1})` }"
+      :style="{ backgroundImage: `url(https://anyname.g.kuroco-mng.app/files/topics/3_ext_1_0.jpg?1715233063615)` }"
     >
       <div class="header__text">
         <h1>{{ response.details.ext_2 }}</h1>
@@ -92,6 +92,7 @@ p {
   justify-content: center;
   height: 100%;
   padding: 0 20px;
+  text-shadow: 3px 3px 5px white;
 }
 .works__item:not(:first-child) {
   margin-top: 3em;
@@ -113,6 +114,7 @@ p {
     left: 0;
     color: #fff;
     z-index: 10;
+    text-shadow: 2px 3px 2px black;
   }
 }
 @media screen and (min-width: 768px) {
