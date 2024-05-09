@@ -76,7 +76,7 @@ h3 {
 }
 p {
   margin: 1em 0;
-  font-size: 0.75em;
+  font-size: 1.2em;
 }
 .header {
   position: relative;
